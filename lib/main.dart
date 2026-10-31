@@ -93,11 +93,13 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
 
   int _counter = 0;
   late Future<List<Student>> studentsFuture;
+  late Future<AbsensiInfo> absensiFuture;
 
   @override
   void initState() {
     super.initState();
     studentsFuture = loadStudents();
+    absensiFuture = fetchAbsensiInfo();
   }
 
   void _incrementCounter() {
@@ -106,20 +108,18 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
     });
   }
 
-  // Halaman absensi dengan jam dan timer kerja
-  void _navigateToAbsensi() {
-    final DateTime waktuAbsen = DateTime.now();
+  // Reload data dari Network API
+  void reloadAbsensi() {
+    setState(() {
+      absensiFuture = fetchAbsensiInfo();
+    });
+  }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => absensi.DetailAbsensi(
-          nama: _name,
-          nim: _nim,
-          waktuMasuk: waktuAbsen,
-        ),
-      ),
-    );
+  // Memuat ulang data JSON
+  void reloadStudents() {
+    setState(() {
+      studentsFuture = loadStudents();
+    });
   }
 
   // Halaman detail presensi biasa
@@ -135,12 +135,6 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
     );
   }
 
-  // Memuat ulang data JSON
-  void reloadStudents() {
-    setState(() {
-      studentsFuture = loadStudents();
-    });
-  }
 
   @override
  /*  Widget build(BuildContext context) {
@@ -345,7 +339,50 @@ Widget build(BuildContext context) {
                 ),
               ),
               const SizedBox(height: 12),
-              const AbsensiInfoCard(),
+              FutureBuilder<AbsensiInfo>(
+                future: absensiFuture,
+                builder: (context, snapshot) {
+                  // State Loading API
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+
+                  // State Error API
+                  if (snapshot.hasError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Gagal memuat API Absensi: ${snapshot.error}',
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 6),
+                          CampusButton(
+                            label: 'Coba Lagi Absensi',
+                            onPressed: reloadAbsensi,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+
+                  // State Success API
+                  if (snapshot.hasData) {
+                    return AbsensiInfoCard(info: snapshot.data!);
+                  }
+
+
+                  return const SizedBox.shrink();
+                },
+              ),
+              const SizedBox(height: 16),
             ],
           );
         },
