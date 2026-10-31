@@ -1,5 +1,6 @@
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'pages/detail_data.dart' as data;
 import 'pages/detail_absensi.dart' as absensi;
@@ -19,6 +20,7 @@ class Student {
   final int semester;
   final String email;
   final int attendance;
+
   const Student({
     required this.id,
     required this.nim,
@@ -28,6 +30,40 @@ class Student {
     required this.email,
     required this.attendance,
   });
+
+  factory Student.fromJson(Map<String, dynamic> json) {
+    return Student(
+      id: json['id'] as int,
+      nim: json['nim'] as String,
+      name: json['name'] as String,
+      major: json['major'] as String,
+      semester: json['semester'] as int,
+      email: json['email'] as String,
+      attendance: json['attendance'] as int,
+    );
+  }
+}
+
+Future<List<Student>> loadStudents() async {
+  // 1. Membaca file JSON sebagai String
+  final jsonString = await rootBundle.loadString(
+    'assets/data/students.json',
+  );
+
+  // 2. Mengubah String JSON menjadi struktur Dart
+  final Map<String, dynamic> decoded =
+      jsonDecode(jsonString) as Map<String, dynamic>;
+
+  // 3. Mengambil array students dari JSON
+  final List<dynamic> studentList =
+      decoded['students'] as List<dynamic>;
+
+  // 4. Mengubah setiap item menjadi objek Student
+  return studentList.map((item) {
+    return Student.fromJson(
+      item as Map<String, dynamic>,
+    );
+  }).toList();
 }
 
 class CampusGoApp extends StatelessWidget {
@@ -47,27 +83,38 @@ class CampusGoHomePage extends StatefulWidget {
   const CampusGoHomePage({super.key});
 
   @override
-  State<CampusGoHomePage> createState() =>
-      _CampusGoHomePageState();
+  State<CampusGoHomePage> createState() => _CampusGoHomePageState();
 }
 
 class _CampusGoHomePageState extends State<CampusGoHomePage> {
-  int _counter = 0;
-
-  // Contoh data mahasiswa
-  final String _nama = 'Rhio Isma Rizky Aziz';
+  // Shared state values
   final String _nim = '411231085';
+  final String _name = 'Rhio Isma Rizky Aziz';
+
+  int _counter = 0;
+  late Future<List<Student>> studentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    studentsFuture = loadStudents();
+  }
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
 
   // Halaman absensi dengan jam dan timer kerja
   void _navigateToAbsensi() {
-    // Waktu dicatat saat tombol Absen Masuk ditekan
     final DateTime waktuAbsen = DateTime.now();
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => absensi.DetailAbsensi(
-          nama: _nama,
+          nama: _name,
           nim: _nim,
           waktuMasuk: waktuAbsen,
         ),
@@ -81,15 +128,22 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
       context,
       MaterialPageRoute(
         builder: (context) => data.DetailData(
-          nama: _nama,
+          nama: _name,
           nim: _nim,
         ),
       ),
     );
   }
 
+  // Memuat ulang data JSON
+  void reloadStudents() {
+    setState(() {
+      studentsFuture = loadStudents();
+    });
+  }
+
   @override
-  Widget build(BuildContext context) {
+ /*  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CampusGo'),
@@ -102,7 +156,6 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
             children: [
               const Icon(Icons.school, size: 80),
               const SizedBox(height: 16),
-
               const Text(
                 'CampusGo',
                 style: TextStyle(
@@ -110,13 +163,11 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 8),
               const Text(
                 'Mobile Academic Information System',
               ),
               const SizedBox(height: 8),
-
               Text(
                 'Total Aktivitas: $_counter',
                 style: const TextStyle(
@@ -124,27 +175,27 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-
               const SizedBox(height: 24),
-
               CampusButton(
                 label: 'Absen Masuk',
                 icon: Icons.login,
                 type: CampusButtonType.primary,
-                onPressed: _navigateToAbsensi,
+                onPressed: () {
+                  _incrementCounter();
+                  _navigateToAbsensi();
+                },
               ),
-
               const SizedBox(height: 12),
-
               CampusButton(
                 label: 'Lihat Detail Presensi',
                 icon: Icons.assignment_ind,
                 type: CampusButtonType.secondary,
-                onPressed: _navigateToDetailData,
+                onPressed: () {
+                  _incrementCounter();
+                  _navigateToDetailData();
+                },
               ),
-
               const SizedBox(height: 12),
-
               CampusButton(
                 label: 'Butuh Bantuan?',
                 icon: Icons.help_outline,
@@ -159,7 +210,6 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
                   );
                 },
               ),
-
               const SizedBox(height: 12),
               const StudentInfoCard(),
               const SizedBox(height: 12),
@@ -167,6 +217,138 @@ class _CampusGoHomePageState extends State<CampusGoHomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+} */
+
+Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('CampusGo')),
+      body: FutureBuilder<List<Student>>(
+        future: studentsFuture,
+        builder: (context, snapshot) {
+          // 1. LOADING STATE
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // 2. ERROR STATE
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 56,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Gagal membaca data mahasiswa.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    CampusButton(
+                      label: 'Coba Lagi',
+                      onPressed: reloadStudents,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          // 3. MENGAMBIL DATA
+          final students = snapshot.data ?? <Student>[];
+          // 4. EMPTY STATE
+          if (students.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.people_outline, size: 56),
+                  SizedBox(height: 12),
+                  Text('Data mahasiswa kosong'),
+                ],
+              ),
+            );
+          }
+          return Column(
+            children: [
+              const Icon(Icons.school, size: 80),
+              const SizedBox(height: 16),
+              const Text(
+                'CampusGo',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text('Mobile Academic Information System'),
+              const SizedBox(height: 8),
+              Text(
+                'Total Aktivitas: $_counter',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              CampusButton(
+                label: 'Tambah Aktivitas',
+                icon: Icons.play_arrow,
+                type: CampusButtonType.primary,
+                onPressed: () {
+                  _incrementCounter();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Aktivitas Berhasil Dimulai!'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              CampusButton(
+                label: 'Lihat Jadwal',
+                icon: Icons.calendar_today,
+                type: CampusButtonType.secondary,
+                onPressed: () {
+                  _navigateToDetailData();
+                },
+              ),
+              const SizedBox(height: 12),
+              CampusButton(
+                label: 'Butuh Bantuan?',
+                icon: Icons.help_outline,
+                type: CampusButtonType.tertiary,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Membuka Pusat Bantuan...')),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: students.length,
+                  itemBuilder: (context, index) {
+                    final student = students[index];
+                    return StudentInfoCard(
+                      nim: student.nim,
+                      name: student.name,
+                      major: student.major,
+                      semester: student.semester,
+                      email: student.email,
+                      attendance: student.attendance,
+                       );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              const AbsensiInfoCard(),
+            ],
+          );
+        },
       ),
     );
   }

@@ -5,9 +5,7 @@ class DetailData extends StatelessWidget {
   final String nama;
   final String nim;
 
-
   const DetailData({super.key, required this.nama, required this.nim});
-
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +49,6 @@ class DetailData extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
 
             // Button Kembali ke Halaman Sebelumnya (Navigator.pop)
             SizedBox(

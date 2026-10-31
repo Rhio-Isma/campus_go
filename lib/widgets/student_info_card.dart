@@ -20,7 +20,7 @@ class StudentInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+/*     return Container(
       width: double.infinity,
 
       padding: const EdgeInsets.all(20),
@@ -89,6 +89,24 @@ class StudentInfoCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    ); */
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(name, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text('NIM: $nim'),
+            Text('Program Studi: $major'),
+            Text('Semester: $semester'),
+            Text('Email: $email'),
+            Text('Kehadiran: $attendance%'),
+          ],
+        ),
       ),
     );
   }
