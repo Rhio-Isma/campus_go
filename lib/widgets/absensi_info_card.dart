@@ -1,65 +1,15 @@
+//DAFTAR ISI
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../models/absensi_info.dart';
 
-class AbsensiInfo {
-  final int userId;
-  final int id;
-  final String title;
-  final String body;
-
-
-  const AbsensiInfo({
-    required this.userId,
-    required this.id,
-    required this.title,
-    required this.body,
-  });
-
-
-  // Factory constructor untuk mengonversi Map JSON ke Objek AbsensiInfo
-  factory AbsensiInfo.fromJson(Map<String, dynamic> json) {
-    return AbsensiInfo(
-      userId: json['userId'] as int,
-      id: json['id'] as int,
-      title: json['title'] as String,
-      body: json['body'] as String,
-    );
-  }
-}
-
-Future<AbsensiInfo> fetchAbsensiInfo() async {
-  final uri = Uri.parse('https://jsonplaceholder.typicode.com/posts');
-
-
-  // Mengirim HTTP GET Request ke server
-  final response = await http.get(uri);
-
-
-  // Memeriksa HTTP Status Code (200 = Success)
-  if (response.statusCode == 200) {
-    final List<dynamic> listJson = jsonDecode(response.body) as List<dynamic>;
-
-
-    // Ambil item pertama dari list postingan sebagai contoh data
-    final Map<String, dynamic> firstItem = listJson.first as Map<String, dynamic>;
-
-
-    return AbsensiInfo.fromJson(firstItem);
-  } else {
-    throw Exception('Gagal memuat data dari server (Status Code: ${response.statusCode})');
-  }
-}
-
+//LEMBAR PENGESAHAN
 class AbsensiInfoCard extends StatelessWidget {
   final AbsensiInfo info;
-
 
   const AbsensiInfoCard({
     super.key,
     required this.info,
   });
-
 
   @override
   Widget build(BuildContext context) {
